@@ -35,6 +35,8 @@ void ABaseCharacter::CheckSurfaceType()
 
 	if (GetWorld()->LineTraceSingleByChannel(Hit, Start, End, ECC_Visibility, QueryParams))
 	{
+		DrawDebugLine(GetWorld(), Start, End, FColor::Red, false, 15.0f, 0, 1.0f);
+
 		// get the physical material from the hit result
 		UPhysicalMaterial* PhysMat = Hit.PhysMaterial.Get();
 		if (PhysMat)

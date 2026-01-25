@@ -6,10 +6,11 @@
 #include "GameFramework/Character.h"
 #include "Kismet/GameplayStatics.h"
 #include "PhysicalMaterials/PhysicalMaterial.h"
+#include "OpenWorldFrameworkCharacter.h"
 #include "BaseCharacter.generated.h"
 
 UCLASS()
-class OPENWORLDFRAMEWORK_API ABaseCharacter : public ACharacter
+class OPENWORLDFRAMEWORK_API ABaseCharacter : public AOpenWorldFrameworkCharacter
 {
 	GENERATED_BODY()
 
