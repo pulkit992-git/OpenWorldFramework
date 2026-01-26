@@ -29,6 +29,23 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Effects")
 	class USurfaceEffectData* SurfaceDataAsset;
 
+	// How fast feed rotate to match the slope (smoothness)
+	UPROPERTY(EditAnywhere, Category = "IK")
+	float IKSmoothSpeed = 15.0f;
+
+	// The calculated tilt for each foot
+	UPROPERTY(BlueprintReadOnly, Category = "IK")
+	FRotator LeftFootTilt;
+
+	UPROPERTY(BlueprintReadOnly, Category = "IK")
+	FRotator RightFootTile;
+
+	// Actual logic function
+	void UpdateFootIK(float DeltaTime);
+
+	// Calculate the tilt from a hit normal
+	FRotator CalculateRotationFromNormal(FVector Normal);
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;

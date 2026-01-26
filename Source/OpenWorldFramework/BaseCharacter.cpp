@@ -5,6 +5,7 @@
 #include "PhysicalMaterials/PhysicalMaterial.h"
 #include "Kismet/GameplayStatics.h"
 #include "SurfaceEffectData.h" 
+#include "Kismet/KismetMathLibrary.h"
 
 // Sets default values
 ABaseCharacter::ABaseCharacter()
@@ -68,11 +69,55 @@ void ABaseCharacter::CheckSurfaceType()
 	}
 }
 
+void ABaseCharacter::UpdateFootIK(float DeltaTime)
+{
+	// For left foot
+	FHitResult LeftHit;
+	FVector L_Start = GetMesh()->GetSocketLocation("foot_l");
+	FVector L_End = L_Start - FVector(0, 0, 50.0f);
+
+	FCollisionQueryParams QueryParams;
+	QueryParams.AddIgnoredActor(this);
+
+	if (GetWorld()->LineTraceSingleByChannel(LeftHit, L_Start, L_End, ECC_Visibility, QueryParams))
+	{
+		// Calculate the target rotation base on the floor's angle (Normal)
+		FRotator TargetRot = CalculateRotationFromNormal(LeftHit.Normal);
+
+		// Smoothly interpolate to that rotation
+		LeftFootTilt = FMath::RInterpTo(LeftFootTilt, TargetRot, DeltaTime, IKSmoothSpeed);
+	}
+
+	// For right foot
+	FHitResult RightHit;
+	FVector R_Start = GetMesh()->GetSocketLocation("foot_r");
+	FVector R_End = R_Start - FVector(0, 0, 50.0f);
+
+	if (GetWorld()->LineTraceSingleByChannel(RightHit, R_Start, R_End, ECC_Visibility, QueryParams))
+	{
+		// Calculate the target rotation base on the floor's angle (Normal)
+		FRotator TargetRot = CalculateRotationFromNormal(RightHit.Normal);
+
+		// Smoothly interpolate to that rotation
+		RightFootTile = FMath::RInterpTo(RightFootTile, TargetRot, DeltaTime, IKSmoothSpeed);
+	}
+}
+
+FRotator ABaseCharacter::CalculateRotationFromNormal(FVector Normal)
+{
+	// Convert the surface normal vector into Pitch(Y) and Roll(X)
+	float Pitch = FMath::Atan2(Normal.Y, Normal.Z) * (180.0f/PI);
+	float Roll = FMath::Atan2(Normal.X, Normal.Z) * (180.0f / PI) * -1.0f;
+
+	return FRotator(Pitch, 0.0f, Roll);
+}
+
 // Called every frame
 void ABaseCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	UpdateFootIK (DeltaTime)
 }
 
 // Called to bind functionality to input
