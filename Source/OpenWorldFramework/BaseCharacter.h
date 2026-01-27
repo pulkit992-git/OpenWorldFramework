@@ -34,17 +34,19 @@ protected:
 	float IKSmoothSpeed = 15.0f;
 
 	// The calculated tilt for each foot
-	UPROPERTY(BlueprintReadOnly, Category = "IK")
+	UPROPERTY(BlueprintReadOnly, Category = "IK", meta = (AllowPrivateAccess = "true"))
 	FRotator LeftFootTilt;
 
-	UPROPERTY(BlueprintReadOnly, Category = "IK")
-	FRotator RightFootTile;
+	UPROPERTY(BlueprintReadOnly, Category = "IK", meta = (AllowPrivateAccess = "true"))
+	FRotator RightFootTilt;
 
 	// Actual logic function
 	void UpdateFootIK(float DeltaTime);
 
 	// Calculate the tilt from a hit normal
 	FRotator CalculateRotationFromNormal(FVector Normal);
+
+	FRotator GetFootRotation(FName SocketName);
 
 public:	
 	// Called every frame
