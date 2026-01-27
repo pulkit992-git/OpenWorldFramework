@@ -6,6 +6,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "SurfaceEffectData.h" 
 #include "Kismet/KismetMathLibrary.h"
+#include "DrawDebugHelpers.h"
 
 // Sets default values
 ABaseCharacter::ABaseCharacter()
@@ -36,7 +37,7 @@ void ABaseCharacter::CheckSurfaceType()
 
 	if (GetWorld()->LineTraceSingleByChannel(Hit, Start, End, ECC_Visibility, QueryParams))
 	{
-		DrawDebugLine(GetWorld(), Start, End, FColor::Red, false, 15.0f, 0, 1.0f);
+		//DrawDebugLine(GetWorld(), Start, End, FColor::Red, false, 15.0f, 0, 1.0f);
 
 		// get the physical material from the hit result
 		UPhysicalMaterial* PhysMat = Hit.PhysMaterial.Get();
@@ -71,6 +72,12 @@ void ABaseCharacter::CheckSurfaceType()
 
 void ABaseCharacter::UpdateFootIK(float DeltaTime)
 {
+
+	// Perform traces for both feet
+	LeftFootTilt = FMath::RInterpTo(LeftFootTilt, GetFootRotation("foot_l"), DeltaTime, IKSmoothSpeed);
+	RightFootTilt = FMath::RInterpTo(RightFootTilt, GetFootRotation("foot_r"), DeltaTime, IKSmoothSpeed);
+
+	/*
 	// For left foot
 	FHitResult LeftHit;
 	FVector L_Start = GetMesh()->GetSocketLocation("foot_l");
@@ -81,6 +88,12 @@ void ABaseCharacter::UpdateFootIK(float DeltaTime)
 
 	if (GetWorld()->LineTraceSingleByChannel(LeftHit, L_Start, L_End, ECC_Visibility, QueryParams))
 	{
+		// Draw the Normal (Green line)
+		DrawDebugLine(GetWorld(), LeftHit.ImpactPoint, LeftHit.ImpactPoint + (LeftHit.Normal * 50.0f), FColor::Green, false, -1.0f, 0, 2.0f);
+
+		// Draw the Impact Point (Small Red Box)
+		DrawDebugBox(GetWorld(), LeftHit.ImpactPoint, FVector(2, 2, 2), FColor::Red, false, -1.0f);
+
 		// Calculate the target rotation base on the floor's angle (Normal)
 		FRotator TargetRot = CalculateRotationFromNormal(LeftHit.Normal);
 
@@ -99,8 +112,32 @@ void ABaseCharacter::UpdateFootIK(float DeltaTime)
 		FRotator TargetRot = CalculateRotationFromNormal(RightHit.Normal);
 
 		// Smoothly interpolate to that rotation
-		RightFootTile = FMath::RInterpTo(RightFootTile, TargetRot, DeltaTime, IKSmoothSpeed);
+		RightFootTilt = FMath::RInterpTo(RightFootTilt, TargetRot, DeltaTime, IKSmoothSpeed);
+		
+	}*/
+}
+
+FRotator ABaseCharacter::GetFootRotation(FName SocketName)
+{
+	FHitResult Hit;
+	FVector Start = GetMesh()->GetSocketLocation(SocketName);
+	FVector End = Start - FVector(0, 0, 50.f);
+
+	FCollisionQueryParams QueryParams;
+	QueryParams.AddIgnoredActor(this);
+
+	if (GetWorld()->LineTraceSingleByChannel(Hit, Start, End, ECC_Visibility, QueryParams))
+	{
+		// Draw the Normal (Green line)
+		DrawDebugLine(GetWorld(), Hit.ImpactPoint, Hit.ImpactPoint + (Hit.Normal * 50.0f), FColor::Green, false, -1.0f, 0, 2.0f);
+
+		// Draw the Impact Point (Small Red Box)
+		DrawDebugBox(GetWorld(), Hit.ImpactPoint, FVector(2, 2, 2), FColor::Red, false, -1.0f);
+
+		return CalculateRotationFromNormal(Hit.Normal);
 	}
+
+	return FRotator::ZeroRotator;
 }
 
 FRotator ABaseCharacter::CalculateRotationFromNormal(FVector Normal)
@@ -109,15 +146,16 @@ FRotator ABaseCharacter::CalculateRotationFromNormal(FVector Normal)
 	float Pitch = FMath::Atan2(Normal.Y, Normal.Z) * (180.0f/PI);
 	float Roll = FMath::Atan2(Normal.X, Normal.Z) * (180.0f / PI) * -1.0f;
 
-	return FRotator(Pitch, 0.0f, Roll);
+	return FRotator(Roll, 0.0f, Pitch);
 }
+
 
 // Called every frame
 void ABaseCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	UpdateFootIK (DeltaTime)
+	UpdateFootIK(DeltaTime);
 }
 
 // Called to bind functionality to input
