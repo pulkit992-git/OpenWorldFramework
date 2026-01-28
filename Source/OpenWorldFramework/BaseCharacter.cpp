@@ -142,11 +142,15 @@ FRotator ABaseCharacter::GetFootRotation(FName SocketName)
 
 FRotator ABaseCharacter::CalculateRotationFromNormal(FVector Normal)
 {
-	// Convert the surface normal vector into Pitch(Y) and Roll(X)
-	float Pitch = FMath::Atan2(Normal.Y, Normal.Z) * (180.0f/PI);
-	float Roll = FMath::Atan2(Normal.X, Normal.Z) * (180.0f / PI) * -1.0f;
+	// Convert world normal into actor's local space
+	FVector LocalNormal = ActorHasTag("Player") ? GetActorTransform().InverseTransformVectorNoScale(Normal) : Normal;
 
-	return FRotator(Roll, 0.0f, Pitch);
+	// Convert the surface normal vector into Pitch(Y) and Roll(X)
+	float Pitch = FMath::RadiansToDegrees(FMath::Atan2(LocalNormal.X, LocalNormal.Z));
+	float Roll = FMath::RadiansToDegrees(FMath::Atan2(LocalNormal.Y, LocalNormal.Z)) * -1.0f;
+
+	//Return the rotator (Yaw should be 0 because we don't want the foot to spin)
+	return FRotator(Pitch, 0.0f, Roll);
 }
 
 
