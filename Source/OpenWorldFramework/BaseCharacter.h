@@ -44,7 +44,7 @@ protected:
 	void UpdateFootIK(float DeltaTime);
 
 	// Calculate the tilt from a hit normal
-	FRotator CalculateRotationFromNormal(FVector Normal);
+	FRotator CalculateRotationFromNormal(FVector Normal, FHitResult hit);
 
 	FRotator GetFootRotation(FName SocketName);
 

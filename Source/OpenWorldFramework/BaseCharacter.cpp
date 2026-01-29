@@ -77,7 +77,7 @@ void ABaseCharacter::UpdateFootIK(float DeltaTime)
 	LeftFootTilt = FMath::RInterpTo(LeftFootTilt, GetFootRotation("foot_l"), DeltaTime, IKSmoothSpeed);
 	RightFootTilt = FMath::RInterpTo(RightFootTilt, GetFootRotation("foot_r"), DeltaTime, IKSmoothSpeed);
 
-	/*
+		/*
 	// For left foot
 	FHitResult LeftHit;
 	FVector L_Start = GetMesh()->GetSocketLocation("foot_l");
@@ -126,6 +126,7 @@ FRotator ABaseCharacter::GetFootRotation(FName SocketName)
 	FCollisionQueryParams QueryParams;
 	QueryParams.AddIgnoredActor(this);
 
+	
 	if (GetWorld()->LineTraceSingleByChannel(Hit, Start, End, ECC_Visibility, QueryParams))
 	{
 		// Draw the Normal (Green line)
@@ -134,23 +135,60 @@ FRotator ABaseCharacter::GetFootRotation(FName SocketName)
 		// Draw the Impact Point (Small Red Box)
 		DrawDebugBox(GetWorld(), Hit.ImpactPoint, FVector(2, 2, 2), FColor::Red, false, -1.0f);
 
-		return CalculateRotationFromNormal(Hit.Normal);
+		return CalculateRotationFromNormal(Hit.Normal, Hit);
 	}
 
 	return FRotator::ZeroRotator;
 }
 
-FRotator ABaseCharacter::CalculateRotationFromNormal(FVector Normal)
+FRotator ABaseCharacter::CalculateRotationFromNormal(FVector Normal, FHitResult Hit)
 {
 	// Convert world normal into actor's local space
 	FVector LocalNormal = ActorHasTag("Player") ? GetActorTransform().InverseTransformVectorNoScale(Normal) : Normal;
+
+	// -----------------------------------------------------
+	// Local normal to world normal 
+	FVector WorldNormalFromLocal = GetActorTransform().TransformVectorNoScale(LocalNormal);
+
+	// 3. Draw the Line
+	DrawDebugLine(
+		GetWorld(),
+		Hit.ImpactPoint,
+		Hit.ImpactPoint + (WorldNormalFromLocal * 50.f),
+		FColor::Cyan, // Use a different color to distinguish from the World Normal
+		false,
+		-1.f,
+		0,
+		2.f
+	);
+	// ---------------------------------------------
+	// -------------------------------------
+	//Get the Actor's Right Vector
+	FVector ActorRight = GetActorRightVector();
+
+	//Calculate the Slope Forward Vector using Cross Product
+	// Normal cross Right = Forward (Tangent to the surface)
+	FVector SlopeForward = FVector::CrossProduct(ActorRight, Hit.Normal);
+
+	//Draw the Debug Line (Blue)
+	DrawDebugLine(
+		GetWorld(),
+		Hit.ImpactPoint,
+		Hit.ImpactPoint + (SlopeForward * 50.f),
+		FColor::Blue,
+		false,
+		-1.f,
+		0,
+		2.f
+	);
+	// ------------------------------------------------
 
 	// Convert the surface normal vector into Pitch(Y) and Roll(X)
 	float Pitch = FMath::RadiansToDegrees(FMath::Atan2(LocalNormal.X, LocalNormal.Z));
 	float Roll = FMath::RadiansToDegrees(FMath::Atan2(LocalNormal.Y, LocalNormal.Z)) * -1.0f;
 
 	//Return the rotator (Yaw should be 0 because we don't want the foot to spin)
-	return FRotator(Pitch, 0.0f, Roll);
+	return FRotator(Roll, 0.0f, Pitch);
 }
 
 
