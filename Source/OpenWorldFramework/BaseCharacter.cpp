@@ -184,11 +184,11 @@ FRotator ABaseCharacter::CalculateRotationFromNormal(FVector Normal, FHitResult 
 	// ------------------------------------------------
 
 	// Convert the surface normal vector into Pitch(Y) and Roll(X)
-	float Pitch = FMath::RadiansToDegrees(FMath::Atan2(LocalNormal.X, LocalNormal.Z));
-	float Roll = FMath::RadiansToDegrees(FMath::Atan2(LocalNormal.Y, LocalNormal.Z)) * -1.0f;
+	float Roll = FMath::RadiansToDegrees(FMath::Atan2(LocalNormal.X, LocalNormal.Z)) * -1;
+	float Pitch = FMath::RadiansToDegrees(FMath::Atan2(LocalNormal.Y, LocalNormal.Z));
 
 	//Return the rotator (Yaw should be 0 because we don't want the foot to spin)
-	return FRotator(Roll, 0.0f, Pitch);
+	return FRotator(Roll, 0, Pitch); 
 }
 
 
