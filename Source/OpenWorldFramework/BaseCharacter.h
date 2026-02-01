@@ -35,18 +35,20 @@ protected:
 
 	// The calculated tilt for each foot
 	UPROPERTY(BlueprintReadOnly, Category = "IK", meta = (AllowPrivateAccess = "true"))
-	FRotator LeftFootTilt;
+	FQuat LeftFootTilt;
 
 	UPROPERTY(BlueprintReadOnly, Category = "IK", meta = (AllowPrivateAccess = "true"))
-	FRotator RightFootTilt;
+	FQuat RightFootTilt;
 
 	// Actual logic function
 	void UpdateFootIK(float DeltaTime);
 
 	// Calculate the tilt from a hit normal
-	FRotator CalculateRotationFromNormal(FVector Normal, FHitResult hit);
+	FQuat CalculateRotationFromNormal(FVector Normal, FHitResult hit);
 
-	FRotator GetFootRotation(FName SocketName);
+	FQuat GetFootRotation(FName SocketName);
+
+	FRotator GetFootWorldRotation(FRotator LocalTilt);
 
 public:	
 	// Called every frame

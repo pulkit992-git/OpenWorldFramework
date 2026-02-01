@@ -73,51 +73,12 @@ void ABaseCharacter::CheckSurfaceType()
 void ABaseCharacter::UpdateFootIK(float DeltaTime)
 {
 
-	// Perform traces for both feet
-	LeftFootTilt = FMath::RInterpTo(LeftFootTilt, GetFootRotation("foot_l"), DeltaTime, IKSmoothSpeed);
-	RightFootTilt = FMath::RInterpTo(RightFootTilt, GetFootRotation("foot_r"), DeltaTime, IKSmoothSpeed);
-
-		/*
-	// For left foot
-	FHitResult LeftHit;
-	FVector L_Start = GetMesh()->GetSocketLocation("foot_l");
-	FVector L_End = L_Start - FVector(0, 0, 50.0f);
-
-	FCollisionQueryParams QueryParams;
-	QueryParams.AddIgnoredActor(this);
-
-	if (GetWorld()->LineTraceSingleByChannel(LeftHit, L_Start, L_End, ECC_Visibility, QueryParams))
-	{
-		// Draw the Normal (Green line)
-		DrawDebugLine(GetWorld(), LeftHit.ImpactPoint, LeftHit.ImpactPoint + (LeftHit.Normal * 50.0f), FColor::Green, false, -1.0f, 0, 2.0f);
-
-		// Draw the Impact Point (Small Red Box)
-		DrawDebugBox(GetWorld(), LeftHit.ImpactPoint, FVector(2, 2, 2), FColor::Red, false, -1.0f);
-
-		// Calculate the target rotation base on the floor's angle (Normal)
-		FRotator TargetRot = CalculateRotationFromNormal(LeftHit.Normal);
-
-		// Smoothly interpolate to that rotation
-		LeftFootTilt = FMath::RInterpTo(LeftFootTilt, TargetRot, DeltaTime, IKSmoothSpeed);
-	}
-
-	// For right foot
-	FHitResult RightHit;
-	FVector R_Start = GetMesh()->GetSocketLocation("foot_r");
-	FVector R_End = R_Start - FVector(0, 0, 50.0f);
-
-	if (GetWorld()->LineTraceSingleByChannel(RightHit, R_Start, R_End, ECC_Visibility, QueryParams))
-	{
-		// Calculate the target rotation base on the floor's angle (Normal)
-		FRotator TargetRot = CalculateRotationFromNormal(RightHit.Normal);
-
-		// Smoothly interpolate to that rotation
-		RightFootTilt = FMath::RInterpTo(RightFootTilt, TargetRot, DeltaTime, IKSmoothSpeed);
-		
-	}*/
+	// Slerp provides a smoother, gimbal-lock-free transition
+	LeftFootTilt = FQuat::Slerp(LeftFootTilt, GetFootRotation("foot_l"), IKSmoothSpeed * DeltaTime);
+	RightFootTilt = FQuat::Slerp(RightFootTilt, GetFootRotation("foot_r"), IKSmoothSpeed * DeltaTime);
 }
 
-FRotator ABaseCharacter::GetFootRotation(FName SocketName)
+FQuat ABaseCharacter::GetFootRotation(FName SocketName)
 {
 	FHitResult Hit;
 	FVector Start = GetMesh()->GetSocketLocation(SocketName);
@@ -138,59 +99,39 @@ FRotator ABaseCharacter::GetFootRotation(FName SocketName)
 		return CalculateRotationFromNormal(Hit.Normal, Hit);
 	}
 
-	return FRotator::ZeroRotator;
+	return FQuat::Identity;
 }
 
-FRotator ABaseCharacter::CalculateRotationFromNormal(FVector Normal, FHitResult Hit)
+FQuat ABaseCharacter::CalculateRotationFromNormal(FVector Normal, FHitResult Hit)
 {
-	// Convert world normal into actor's local space
-	FVector LocalNormal = ActorHasTag("Player") ? GetActorTransform().InverseTransformVectorNoScale(Normal) : Normal;
+	// We want the foot's UP (Z) to be the Ground Normal.
+	// We want the foot's FORWARD (X) to stay pointing with the Actor.
+	// MakeRotFromZX is the "Magic Node" that handles this perfectly.
+	FRotator TargetRot = UKismetMathLibrary::MakeRotFromZX(Normal, GetActorForwardVector());
 
-	// -----------------------------------------------------
-	// Local normal to world normal 
-	FVector WorldNormalFromLocal = GetActorTransform().TransformVectorNoScale(LocalNormal);
+	// Convert to Quaternion to prevent Gimbal Lock
+	FQuat TargetQuat = TargetRot.Quaternion();
 
-	// 3. Draw the Line
-	DrawDebugLine(
-		GetWorld(),
-		Hit.ImpactPoint,
-		Hit.ImpactPoint + (WorldNormalFromLocal * 50.f),
-		FColor::Cyan, // Use a different color to distinguish from the World Normal
-		false,
-		-1.f,
-		0,
-		2.f
-	);
-	// ---------------------------------------------
-	// -------------------------------------
-	//Get the Actor's Right Vector
-	FVector ActorRight = GetActorRightVector();
+	// SKELETON OFFSET: This is the 90-degree fix for your specific mesh.
+	// We do this by multiplying two Quaternions. 
+	// If the foot is "sideways," change the FVector to (1,0,0) or (0,0,1).
+	FQuat BoneFix = FQuat(FVector(0, 1, 0), FMath::DegreesToRadians(90.0f));
 
-	//Calculate the Slope Forward Vector using Cross Product
-	// Normal cross Right = Forward (Tangent to the surface)
-	FVector SlopeForward = FVector::CrossProduct(ActorRight, Hit.Normal);
-
-	//Draw the Debug Line (Blue)
-	DrawDebugLine(
-		GetWorld(),
-		Hit.ImpactPoint,
-		Hit.ImpactPoint + (SlopeForward * 50.f),
-		FColor::Blue,
-		false,
-		-1.f,
-		0,
-		2.f
-	);
-	// ------------------------------------------------
-
-	// Convert the surface normal vector into Pitch(Y) and Roll(X)
-	float Roll = FMath::RadiansToDegrees(FMath::Atan2(LocalNormal.X, LocalNormal.Z)) * -1;
-	float Pitch = FMath::RadiansToDegrees(FMath::Atan2(LocalNormal.Y, LocalNormal.Z));
-
-	//Return the rotator (Yaw should be 0 because we don't want the foot to spin)
-	return FRotator(Roll, 0, Pitch); 
+	// Combine them (Order matters: World Rotation * Offset)
+	return TargetQuat * BoneFix;
 }
 
+FRotator ABaseCharacter::GetFootWorldRotation(FRotator LocalTilt)
+{
+	// Combine the Actor's world orientation with your calculated tilt
+	FQuat ActorQuat = GetActorQuat();
+	FQuat TiltQuat = FQuat(LocalTilt);
+
+	// This 'rotates' the local tilt by the actor's current world direction
+	FQuat WorldQuat = ActorQuat * TiltQuat;
+
+	return WorldQuat.Rotator();
+}
 
 // Called every frame
 void ABaseCharacter::Tick(float DeltaTime)
