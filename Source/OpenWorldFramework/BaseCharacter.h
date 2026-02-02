@@ -8,6 +8,7 @@
 #include "PhysicalMaterials/PhysicalMaterial.h"
 #include "OpenWorldFrameworkCharacter.h"
 #include "BaseCharacter.generated.h"
+#include "PhysicsEngine/PhysicsHandleComponent.h"
 
 UCLASS()
 class OPENWORLDFRAMEWORK_API ABaseCharacter : public AOpenWorldFrameworkCharacter
@@ -49,6 +50,33 @@ protected:
 	FQuat GetFootRotation(FName SocketName);
 
 	FRotator GetFootWorldRotation(FRotator LocalTilt);
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Physics")
+	UPhysicsHandleComponent* PhysicsHandle;
+
+	// Distance we can grab object from
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Physics")
+	float GrabDistance = 500.0f;
+
+	// Distance the object floats in front of us
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Physics")
+	float HoldDistance = 250.0f;
+
+	// How hard we throw the object
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Physics")
+	float ThrowForce = 2000.0f;
+
+	void Grab();
+
+	void Release();
+
+	void Throw();
+
+	// To keep track of the grabbed component
+	UPrimitiveComponent* GrabbedComponent;
+
+	UPROPERTY (EditAnywhere)
+	USoundBase GrabSound;
 
 public:	
 	// Called every frame

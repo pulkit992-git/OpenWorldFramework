@@ -14,6 +14,7 @@ ABaseCharacter::ABaseCharacter()
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	PhysicsHandle = CreateDefaultSubobject<UPhysicsHandleComponent>(TEXT("PhysicsHandle"));
 }
 
 // Called when the game starts or when spawned
@@ -139,6 +140,12 @@ void ABaseCharacter::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	UpdateFootIK(DeltaTime);
+
+	if (PhysicsHandle->GrabbedComponent)
+	{
+		FVector TargetLocation = GetPawnViewLocation() + (GetViewRotation().Vector() * HoldDistance);
+		PhysicsHandle->SetTargetLocation(TargetLocation);
+	}
 }
 
 // Called to bind functionality to input
@@ -147,4 +154,54 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
 }
+
+void ABaseCharacter::Grab()
+{
+	FHitResult Hit;
+	FVector Start = GetPawnViewLocation();
+	FVector End = Start + (GetViewRotation().Vector() * GrabDistance);
+
+	FCollisionQueryParams Params;
+	Params.AddIgnoredActor(this);
+
+	if (GetWorld()->LineTraceSingleByChannel(Hit, Start, End, ECC_PhysicsBody, Params))
+	{
+		UPrimitiveComponent* ComponentToGrab = Hit.GetComponent();
+
+		if (ComponentToGrab && ComponentToGrab->IsSimulatingPhysics())
+		{
+			GrabbedComponent = ComponentToGrab;
+
+			PhysicsHandle->GrabComponentAtLocationWithRotation(
+				ComponentToGrab,
+				NAME_None,
+				Hit.ImpactPoint,
+				ComponentToGrab->GetComponentRotation()
+			);
+
+			// Grab sound 
+			//UGameplayStatics::PlaySoundAtLocation(this, GrabSound, Hit.ImpactPoint);
+		}
+	}
+}
+
+
+void ABaseCharacter::Throw()
+{
+	if (GrabbedComponent)
+	{
+		UPrimitiveComponent* TempComponent = GrabbedComponent;
+
+		// Release it
+		PhysicsHandle->ReleaseComponent();
+		GrabbedComponent = nullptr;
+
+		// throw in forward direction
+		FVector LaunchDirection = GetViewRotation().Vector();
+		TempComponent->AddImpulse(LaunchDirection * ThrowForce, NAME_None, true);
+
+		// Sound effect for throwing
+	}
+}
+
 
