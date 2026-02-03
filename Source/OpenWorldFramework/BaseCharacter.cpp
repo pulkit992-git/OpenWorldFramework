@@ -7,6 +7,8 @@
 #include "SurfaceEffectData.h" 
 #include "Kismet/KismetMathLibrary.h"
 #include "DrawDebugHelpers.h"
+#include "EnhancedInputComponent.h"
+#include "EnhancedInputSubsystems.h"
 
 // Sets default values
 ABaseCharacter::ABaseCharacter()
@@ -153,6 +155,12 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
+	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent))
+	{
+		// Grabbing (Physics Handle)
+		EnhancedInputComponent->BindAction(GrabAction, ETriggerEvent::Started, this, &ABaseCharacter::Grab);
+		EnhancedInputComponent->BindAction(GrabAction, ETriggerEvent::Completed, this, &ABaseCharacter::Release);
+	}
 }
 
 void ABaseCharacter::Grab()
@@ -202,6 +210,11 @@ void ABaseCharacter::Throw()
 
 		// Sound effect for throwing
 	}
+}
+
+void ABaseCharacter::Release()
+{
+	PhysicsHandle->ReleaseComponent();
 }
 
 

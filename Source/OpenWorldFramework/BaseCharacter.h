@@ -7,8 +7,9 @@
 #include "Kismet/GameplayStatics.h"
 #include "PhysicalMaterials/PhysicalMaterial.h"
 #include "OpenWorldFrameworkCharacter.h"
-#include "BaseCharacter.generated.h"
 #include "PhysicsEngine/PhysicsHandleComponent.h"
+#include "BaseCharacter.generated.h"
+
 
 UCLASS()
 class OPENWORLDFRAMEWORK_API ABaseCharacter : public AOpenWorldFrameworkCharacter
@@ -75,8 +76,11 @@ protected:
 	// To keep track of the grabbed component
 	UPrimitiveComponent* GrabbedComponent;
 
-	UPROPERTY (EditAnywhere)
-	USoundBase GrabSound;
+//	UPROPERTY (EditAnywhere)
+//	USoundBase GrabSound;
+
+	UPROPERTY(EditAnywhere, Category = "Input")
+	UInputAction* GrabAction;
 
 public:	
 	// Called every frame
