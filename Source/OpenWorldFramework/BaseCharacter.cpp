@@ -145,8 +145,26 @@ void ABaseCharacter::Tick(float DeltaTime)
 
 	if (PhysicsHandle->GrabbedComponent)
 	{
-		FVector TargetLocation = GetPawnViewLocation() + (GetViewRotation().Vector() * HoldDistance);
+		//FVector TargetLocation = GetPawnViewLocation() + (GetViewRotation().Vector() * HoldDistance);
+		//PhysicsHandle->SetTargetLocation(TargetLocation);
+
+		// Get the location of the character's chest or eye
+		FVector HolderLocation = GetActorLocation() + FVector(0, 0, 60.0f);
+
+		// Target position, always in front of the character
+		FVector TargetLocation = HolderLocation + (GetActorForwardVector() * HoldDistance);
+
+		// Make the object float
+		float BobbingSpeed = 4.0f;
+		float BobbingAmount = 600.0f;
+		float VerticalOffset = FMath::Sin(GetWorld()->GetRealTimeSeconds() * BobbingSpeed);
+
+		TargetLocation.Z += VerticalOffset;
+
+		// Add vertical offset at eye level
 		PhysicsHandle->SetTargetLocation(TargetLocation);
+		// Update the rotation 
+		PhysicsHandle->SetTargetRotation(GetActorRotation());
 	}
 }
 
@@ -160,6 +178,9 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 		// Grabbing (Physics Handle)
 		EnhancedInputComponent->BindAction(GrabAction, ETriggerEvent::Started, this, &ABaseCharacter::Grab);
 		EnhancedInputComponent->BindAction(GrabAction, ETriggerEvent::Completed, this, &ABaseCharacter::Release);
+
+		// Throw (Physics Handle)
+		EnhancedInputComponent->BindAction(ThrowAction, ETriggerEvent::Started, this, &ABaseCharacter::Throw);
 	}
 }
 

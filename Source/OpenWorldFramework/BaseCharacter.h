@@ -82,6 +82,9 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Input")
 	UInputAction* GrabAction;
 
+	UPROPERTY(EditAnywhere, Category = "Input")
+		UInputAction* ThrowAction;
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
