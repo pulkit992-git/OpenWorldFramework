@@ -211,7 +211,9 @@ void ABaseCharacter::Grab()
 			// Grab sound 
 			if (GrabSound)
 			{
-				UGameplayStatics::PlaySoundAtLocation(this, GrabSound, Hit.ImpactPoint);
+				ActiveGrabSound = UGameplayStatics::SpawnSoundAttached(GrabSound, GrabbedComponent);
+					
+					//UGameplayStatics::PlaySoundAtLocation(this, GrabSound, Hit.ImpactPoint);
 			}
 		}
 	}
@@ -233,6 +235,13 @@ void ABaseCharacter::Throw()
 		FVector LaunchDirection = GetViewRotation().Vector();
 		TempComponent->AddImpulse(LaunchDirection * ThrowForce, NAME_None, true);
 
+		// stop grabbed sound
+		if (ActiveGrabSound)
+		{
+			ActiveGrabSound->Stop();
+			ActiveGrabSound = nullptr;
+		}
+
 		// Sound effect for throwing
 		if (ThrowSound)
 		{
@@ -250,6 +259,13 @@ void ABaseCharacter::Throw()
 void ABaseCharacter::Release()
 {
 	PhysicsHandle->ReleaseComponent();
+
+	// stop grabbed sound
+	if (ActiveGrabSound)
+	{
+		ActiveGrabSound->Stop();
+		ActiveGrabSound = nullptr;
+	}
 }
 
 

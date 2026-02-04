@@ -9,6 +9,7 @@
 #include "OpenWorldFrameworkCharacter.h"
 #include "PhysicsEngine/PhysicsHandleComponent.h"
 #include "NiagaraFunctionLibrary.h"
+#include "Components/AudioComponent.h"
 #include "BaseCharacter.generated.h"
 
 
@@ -79,6 +80,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = "Effects")
 	USoundBase* GrabSound;
+
+	UPROPERTY()
+	UAudioComponent* ActiveGrabSound;
 
 	UPROPERTY(EditAnywhere, Category = "Effects")
 	USoundBase* ThrowSound;
