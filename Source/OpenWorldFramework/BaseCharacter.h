@@ -8,6 +8,7 @@
 #include "PhysicalMaterials/PhysicalMaterial.h"
 #include "OpenWorldFrameworkCharacter.h"
 #include "PhysicsEngine/PhysicsHandleComponent.h"
+#include "NiagaraFunctionLibrary.h"
 #include "BaseCharacter.generated.h"
 
 
@@ -76,8 +77,17 @@ protected:
 	// To keep track of the grabbed component
 	UPrimitiveComponent* GrabbedComponent;
 
-//	UPROPERTY (EditAnywhere)
-//	USoundBase GrabSound;
+	UPROPERTY(EditAnywhere, Category = "Effects")
+	USoundBase* GrabSound;
+
+	UPROPERTY(EditAnywhere, Category = "Effects")
+	USoundBase* ThrowSound;
+
+	UPROPERTY(EditAnywhere, Category = "Effects")
+	UNiagaraSystem* GrabParticle;
+	
+	UPROPERTY(EditAnywhere, Category = "Effects")
+	UNiagaraSystem* LaunchParticle;
 
 	UPROPERTY(EditAnywhere, Category = "Input")
 	UInputAction* GrabAction;

@@ -19,7 +19,8 @@ public class OpenWorldFramework : ModuleRules
 			"GameplayStateTreeModule",
 			"UMG",
 			"Slate",
-            "PhysicsCore"
+            "PhysicsCore",
+            "Niagara"
         });
 
 		PrivateDependencyModuleNames.AddRange(new string[] { });

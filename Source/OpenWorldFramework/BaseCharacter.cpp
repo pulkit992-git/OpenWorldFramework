@@ -155,11 +155,11 @@ void ABaseCharacter::Tick(float DeltaTime)
 		FVector TargetLocation = HolderLocation + (GetActorForwardVector() * HoldDistance);
 
 		// Make the object float
-		float BobbingSpeed = 4.0f;
-		float BobbingAmount = 600.0f;
+		float BobbingSpeed = 2.0f;
+		float BobbingAmount = 15.0f;
 		float VerticalOffset = FMath::Sin(GetWorld()->GetRealTimeSeconds() * BobbingSpeed);
 
-		TargetLocation.Z += VerticalOffset;
+		TargetLocation.Z += (VerticalOffset * BobbingAmount);
 
 		// Add vertical offset at eye level
 		PhysicsHandle->SetTargetLocation(TargetLocation);
@@ -209,7 +209,10 @@ void ABaseCharacter::Grab()
 			);
 
 			// Grab sound 
-			//UGameplayStatics::PlaySoundAtLocation(this, GrabSound, Hit.ImpactPoint);
+			if (GrabSound)
+			{
+				UGameplayStatics::PlaySoundAtLocation(this, GrabSound, Hit.ImpactPoint);
+			}
 		}
 	}
 }
@@ -220,6 +223,7 @@ void ABaseCharacter::Throw()
 	if (GrabbedComponent)
 	{
 		UPrimitiveComponent* TempComponent = GrabbedComponent;
+		FVector LaunchLocation = TempComponent->GetComponentLocation();
 
 		// Release it
 		PhysicsHandle->ReleaseComponent();
@@ -230,6 +234,16 @@ void ABaseCharacter::Throw()
 		TempComponent->AddImpulse(LaunchDirection * ThrowForce, NAME_None, true);
 
 		// Sound effect for throwing
+		if (ThrowSound)
+		{
+			UGameplayStatics::PlaySoundAtLocation(this, ThrowSound, LaunchLocation);
+		}
+
+		// Particle effect
+		if (LaunchParticle)
+		{
+			UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), LaunchParticle, LaunchLocation);
+		}
 	}
 }
 
